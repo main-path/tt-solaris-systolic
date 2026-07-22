@@ -17,11 +17,11 @@
 
   "//": "CLOCK_PERIOD - Increase this in case you are getting setup time violations.",
   "//": "The value is in nanoseconds, so 20ns == 50MHz.",
-  "//": "Set to 25ns (40MHz) from measurement, not guesswork: a local LibreLane run
-  at 20ns closed at the nominal corner but missed the slow corner
-  (nom_ss_100C_1v60) by -1.88ns, i.e. a real path of 21.88ns. 25ns leaves
-  ~3.1ns of margin. The chip is externally clocked, so this is what we
-  declare, not a limit on what it can be driven at.",
+  "//": "Set to 25ns (40MHz) from measurement, not guesswork. A local LibreLane run",
+  "//": "at 20ns closed at the nominal corner but missed the slow corner",
+  "//": "(nom_ss_100C_1v60) by -1.88ns, i.e. a real path of 21.88ns. 25ns leaves",
+  "//": "~3.1ns of margin. The part is externally clocked, so this is what we",
+  "//": "declare, not a limit on what it can be driven at.",
   "CLOCK_PERIOD": 25,
 
   "//": "Hold slack margin - Increase them in case you are getting hold violations.",
