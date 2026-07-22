@@ -5,14 +5,20 @@ project:
   discord:      ""
   description:  "4x4 int8 output-stationary systolic array: a matrix multiply engine with byte-serial load and readout"
   language:     "Verilog"
-  clock_hz:     50000000
+  clock_hz:     40000000   # 25ns; measured slow-corner path is 21.88ns
 
   # How many tiles your design occupies? A single tile is about 167x108 uM.
-  # A local LibreLane run measured 192,321 um2 of standard cells for N=4.
-  # At a routable ~60% density that needs ~320,000 um2:
-  #   6x2 = 1002 x 216 = 216,432 um2  -> would need 89% density, not routable
-  #   8x2 = 1336 x 216 = 288,576 um2  -> ~67% density, tight but plausible
-  tiles: "8x2"          # Valid values: 1x1, 1x2, 2x2, 3x2, 4x2, 6x2 or 8x2
+  # Measured, not estimated: a local LibreLane run reports 192,321 um2 of
+  # standard cells for N=4 (pre-pipelining; the fetch-mux fix should reduce it).
+  # Tile geometry is from tt-support-tools tech/sky130A/tile_sizes.yaml:
+  #   3x2 =  508.76 x 225.76 = 114,858 um2   6 tiles  -- too small
+  #   3x4 =  508.76 x 511.36 = 260,160 um2  12 tiles  -- 74% cells, near-square
+  #   4x4 =  682.64 x 511.36 = 349,075 um2  16 tiles  -- fallback, 55% cells
+  #   8x2 = 1378.16 x 225.76 = 311,113 um2  16 tiles  -- 6.1:1 strip, avoid
+  # 3x4 over 8x2: fewer tiles AND square. This is a 4x4 mesh with nearest-
+  # neighbour links; a 6:1 strip stretches it into a line and every local wire
+  # becomes a long wire on sky130's 4 routable metal layers.
+  tiles: "3x4"          # see tile_sizes.yaml for the full valid list
 
   # Your top module name must start with "tt_um_". Make it unique by including your github username:
   top_module:  "tt_um_mainpath_solaris"
