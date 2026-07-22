@@ -27,6 +27,17 @@ RESBYTES = NN * (AW // 8)
 
 CLK_NS = 100  # 10 MHz -- comfortable for gate-level sim
 
+# How long to wait after a clock edge before sampling an output.
+#
+# This must exceed the combinational settling time of the DUT. In RTL
+# simulation signals settle instantly and any tiny value works -- which is
+# exactly why a too-small value passes RTL and fails gate level. The gate-level
+# build compiles with UNIT_DELAY=#1, giving every cell real propagation delay,
+# and a 1 ns sample caught uo_out mid-flight: every result came back shifted one
+# byte position (got == expected * 256 + 0xFF), because the byte read was the
+# previous one. 20 ns is comfortably past settling and well short of CLK_NS.
+SETTLE_NS = 20
+
 # uio_in control bits
 WR, START, RD, RSTPTR = 2, 3, 4, 5
 
@@ -78,7 +89,7 @@ async def compute(dut, timeout=500):
     dut.uio_in.value = 0
     for _ in range(timeout):
         await RisingEdge(dut.clk)
-        await Timer(1, unit="ns")
+        await Timer(SETTLE_NS, unit="ns")
         if int(dut.uio_out.value) & 0b10:      # DONE
             return
     raise TimeoutError("DONE never asserted")
@@ -93,7 +104,7 @@ async def read_results(dut):
     dut.uio_in.value = ctrl(rd=1)
     await RisingEdge(dut.clk)
     for _ in range(RESBYTES):
-        await Timer(1, unit="ns")
+        await Timer(SETTLE_NS, unit="ns")
         raw.append(int(dut.uo_out.value) & 0xFF)
         await RisingEdge(dut.clk)
     dut.uio_in.value = 0
@@ -192,7 +203,7 @@ async def test_uio_oe(dut):
     also drives, that is contention on real silicon."""
     cocotb.start_soon(Clock(dut.clk, CLK_NS, unit="ns").start())
     await reset(dut)
-    await Timer(1, unit="ns")
+    await Timer(SETTLE_NS, unit="ns")
     oe = int(dut.uio_oe.value)
     assert oe == 0b00000011, f"uio_oe = {oe:#010b}, expected 0b00000011"
     dut._log.info("uio_oe correct: [1:0] driven, [7:2] inputs")
